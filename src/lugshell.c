@@ -324,7 +324,7 @@ int main() {
     char *path = getenv("PATH");
 
     fprintf(stdout, "lugshell! Heck yeah!\n");
-    fprintf(stdout, path);
+    fprintf(stdout, "%s", path);
     fputc('\n', stdout);
     fflush(stdout);
 
@@ -333,6 +333,7 @@ int main() {
         // handler and wind up back here. Put out a newline so the
         // output to the user looks cleaner, then immediately fall back
         // into the read/eval loop.
+        // See setjmp.3 manual for more information.
         fputc('\n', stdout);
     }
 
