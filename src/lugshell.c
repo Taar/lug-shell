@@ -34,8 +34,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#ifdef USE_READLINE
 #include <readline/history.h>
 #include <readline/readline.h>
+#endif
 
 static jmp_buf sigint_buf;
 
@@ -338,6 +340,7 @@ int main() {
         fputc('\n', stdout);
     }
 
+#ifdef USE_READLINE
     char *input;
     while ((input = readline("% ")) != NULL) {
         if (input[0] != '\0') {
@@ -347,4 +350,17 @@ int main() {
         }
         free(input); // Readline allocates memory that must be freed
     }
+#else
+    while (1) {
+        char buffer[1024];
+        fprintf(stdout, "%% ");
+        fflush(stdout);
+        fgets(buffer, sizeof(buffer) - 1, stdin);
+        if (feof(stdin)) {
+            break;
+        }
+        chomp(buffer);
+        process(STDIN_FILENO, STDOUT_FILENO, buffer, strlen(buffer));
+    }
+#endif
 }
