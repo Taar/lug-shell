@@ -300,7 +300,8 @@ static void process(int in, int out, char *input, int count) {
         tokens[i] = NULL;
     }
 
-    if (struct builtin_action *action = find_builtin(tokens[0])) {
+    struct builtin_action *action = find_builtin(tokens[0]);
+    if (action) {
         // handle any carved-out builtin functions.
         (void)(action->action)();
     } else {
