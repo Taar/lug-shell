@@ -1,10 +1,12 @@
 ARG DEBIAN_TAG=13.7-slim
+
 FROM docker.io/library/debian:${DEBIAN_TAG} as packages
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
         cmake \
+        gdb \
         libreadline-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -56,18 +58,7 @@ COPY ./src /opt/src
 
 WORKDIR /opt/build
 
-RUN build.bash
-
-FROM docker.io/library/debian:${DEBIAN_TAG} as lug-shell
-
-COPY --from=build /opt/build/lug-shell /usr/bin/lug-shell
-RUN mkdir -p /usr/share/doc/lug-shell
-WORKDIR /usr/share/doc/lug-shell
-COPY --from=build /opt/LICENSE LICENSE
-COPY --from=build /opt/docs docs
-COPY --from=build /opt/README.md README.md
-
-ENTRYPOINT [ "/usr/bin/lug-shell" ]
+RUN ./build.bash
 
 # This image only contains manuals (man pages)
 FROM docker.io/library/debian:${DEBIAN_TAG} as manuals
@@ -89,3 +80,21 @@ RUN apt-get update \
 RUN mandb
 
 ENTRYPOINT [ "man" ]
+
+# NOTE: the lug-shell should be the last stage defined in this file as if no target is
+# provided at build time, it will be used as the default
+FROM docker.io/library/debian:${DEBIAN_TAG} as lug-shell
+
+COPY --from=build /opt/build/lug-shell /usr/bin/lug-shell
+RUN mkdir -p /usr/share/doc/lug-shell
+
+WORKDIR /usr/share/doc/lug-shell
+
+COPY --from=build /opt/LICENSE LICENSE
+COPY --from=build /opt/docs docs
+COPY --from=build /opt/README.md README.md
+
+WORKDIR /
+
+ENTRYPOINT [ "/usr/bin/lug-shell" ]
+
