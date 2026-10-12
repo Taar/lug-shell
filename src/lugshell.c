@@ -44,10 +44,9 @@ static jmp_buf sigint_buf;
 struct builtin_action;
 
 static void handle_signal(int);
-static int do_echo();
 static void chomp(char *str);
 static struct builtin_action *find_builtin(char *cmd);
-static int invoke_action(struct builtin_action *);
+static int invoke_action(struct builtin_action *, char **);
 static int invoke_cmd(int in, int out, char *args[]);
 static int process_pipeline(int in, int out, char *cmd[]);
 static int process_disjunction(int in, int out, char *cmd[]);
@@ -167,7 +166,7 @@ static void process(int in, int out, char *input, int count) {
     struct builtin_action *action = find_builtin(tokens[0]);
     if (action) {
         // handle any carved-out builtin functions.
-        invoke_action(action);
+        invoke_action(action, &tokens[1]);
     } else {
         // Fall back to regular invocation.
         process_list(in, out, tokens);
@@ -177,18 +176,28 @@ static void process(int in, int out, char *input, int count) {
 /**
  * @brief Implements built-in echo functionality.
  */
-static int do_echo() {
-    fprintf(stdout, "echo!!!\n");
+static int do_echo(char **tokens) {
+    for (int i = 0; tokens[i] != NULL; ++i) {
+        fprintf(stdout, tokens[i]);
+        if (tokens[i + 1] != NULL) {
+						fprintf(stdout, " ");
+        }
+    }
+    fprintf(stdout, "\n");
     return 0;
+}
+
+static int do_cd(char **tokens) {
+		return 0;
 }
 
 static struct builtin_action {
     char *name;
-    int (*action)();
-} builtins[] = {{"echo", do_echo}};
+    int (*action)(char **);
+} builtins[] = {{"echo", do_echo}, {"cd", do_cd}};
 
-static int invoke_action(struct builtin_action *action) {
-    return action->action();
+static int invoke_action(struct builtin_action *action, char **tokens) {
+    return action->action(tokens);
 }
 
 /**
