@@ -22,7 +22,7 @@
  * OR-SYMB   ::= '||'
  * PIPE-SYMB ::= '|'
  *
- * @author Bryan St. Amour
+ * @author Bryan St. Amour, Randy Topliffe
  */
 
 #include <errno.h>
