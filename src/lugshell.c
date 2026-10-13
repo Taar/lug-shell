@@ -193,9 +193,13 @@ static int do_cd(char **tokens) {
     case '-':
     case '~':
         break;
-    default:
-        chdir(path_to_cd);
+    default: {
+        int result = chdir(path_to_cd);
+        if (result == -1) {
+            fprintf(stdout, "Cannot cd: %s\n", strerror(errno));
+        }
         break;
+    }
     }
     return 0;
 }
