@@ -26,6 +26,7 @@
  */
 
 #include <errno.h>
+#include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
@@ -189,17 +190,31 @@ static int do_echo(char **tokens) {
 
 static int do_cd(char **tokens) {
     char *path_to_cd = tokens[0];
-    switch (path_to_cd[0]) {
-    case '-':
-    case '~':
-        break;
-    default: {
-        int result = chdir(path_to_cd);
-        if (result == -1) {
-            fprintf(stdout, "Cannot cd: %s\n", strerror(errno));
+    if (path_to_cd == NULL) {
+        // No path, equivalent to "cd" by itself. Go to the user's home
+        // directory.
+        struct passwd *pw = getpwuid(getuid());
+        if (pw != NULL) {
+            int result = chdir(pw->pw_dir);
+            if (result == -1) {
+                fprintf(stdout, "Cannot cd: %s\n", strerror(errno));
+            }
+        } else {
+            fprintf(stdout, "Cannot find user home directory\n");
         }
-        break;
-    }
+    } else {
+        switch (path_to_cd[0]) {
+        case '-':
+        case '~':
+            break;
+        default: {
+            int result = chdir(path_to_cd);
+            if (result == -1) {
+                fprintf(stdout, "Cannot cd: %s\n", strerror(errno));
+            }
+            break;
+        }
+        }
     }
     return 0;
 }
