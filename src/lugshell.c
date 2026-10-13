@@ -180,7 +180,7 @@ static int do_echo(char **tokens) {
     for (int i = 0; tokens[i] != NULL; ++i) {
         fprintf(stdout, tokens[i]);
         if (tokens[i + 1] != NULL) {
-						fprintf(stdout, " ");
+            fprintf(stdout, " ");
         }
     }
     fprintf(stdout, "\n");
@@ -188,7 +188,16 @@ static int do_echo(char **tokens) {
 }
 
 static int do_cd(char **tokens) {
-		return 0;
+    char *path_to_cd = tokens[0];
+    switch (path_to_cd[0]) {
+    case '-':
+    case '~':
+        break;
+    default:
+        chdir(path_to_cd);
+        break;
+    }
+    return 0;
 }
 
 static struct builtin_action {
