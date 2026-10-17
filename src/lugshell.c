@@ -80,6 +80,11 @@ int main() {
         // output to the user looks cleaner, then immediately fall back
         // into the read/eval loop.
         // See setjmp.3 manual for more information.
+        //
+        // The reason for sigsetjmp and siglongjmp are because when you
+        // catch a signal, your currently caught signal is masked and thus
+        // cannot be caught a second time. The sig* versions not only perform
+        // the jump, but also unmask the signal.
         fputc('\n', stdout);
     }
 
@@ -155,6 +160,14 @@ static void process(int in, int out, char *input, int count) {
         int i = 0;
         for (char *to_tokenize = input; i != max_tokens - 1;
              to_tokenize = NULL, ++i) {
+            // strtok_r works by the following means:
+            //
+            // The first time you call it, you pass it a string to tokenize
+            // (our to_tokenize pointer), a delimiter string, and some state
+            // (saveptr). Subsequent calls are done by passing NULL as your
+            // first parameter. Each call you make returns a pointer to the
+            // start of the next token in the string. We save those pointers
+            // in our tokens array for downstream processing.
             char *token = strtok_r(to_tokenize, " ", &saveptr);
             if (token == NULL) {
                 break;
@@ -188,6 +201,9 @@ static int do_echo(char **tokens) {
     return 0;
 }
 
+/**
+ * @brief Implements cd (change directory) functionality.
+ */
 static int do_cd(char **tokens) {
     char *path_to_cd = tokens[0];
     if (path_to_cd == NULL) {
@@ -204,6 +220,7 @@ static int do_cd(char **tokens) {
         }
     } else {
         switch (path_to_cd[0]) {
+        // These first few choices are not yet implemented.
         case '-':
         case '~':
             break;
@@ -219,11 +236,20 @@ static int do_cd(char **tokens) {
     return 0;
 }
 
+//
+// A table of built-in shell commands. Whenever you want to add a new 
+// built-in, write the functionality, then add it to this table. It will
+// automatically work with the rest of the shell.
+//
 static struct builtin_action {
     char *name;
     int (*action)(char **);
 } builtins[] = {{"echo", do_echo}, {"cd", do_cd}};
 
+/**
+ * @brief Given an action entry and a command line parameter list,
+ * invoke the action on the parameters.
+ */
 static int invoke_action(struct builtin_action *action, char **tokens) {
     return action->action(tokens);
 }
